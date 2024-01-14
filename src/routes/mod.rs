@@ -8,7 +8,7 @@ mod root;
 use root::root_get;
 
 mod merchant_route;
-use self::merchant_route::merchant_post;
+use self::merchant_route::{merchant_post, merchant_list};
 
 pub fn create_routes(db: Pool<Postgres>) -> Router {
     let cors = CorsLayer::new()
@@ -18,6 +18,7 @@ pub fn create_routes(db: Pool<Postgres>) -> Router {
     Router::new()
     .route("/", get(root_get))
     .route("/merchants", post(merchant_post))
+    .route("/merchants", get(merchant_list))
     .layer(cors) // affect allroutes above
     .layer(Extension(db))
 }
