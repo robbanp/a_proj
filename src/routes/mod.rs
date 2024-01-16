@@ -1,5 +1,5 @@
 use axum::Extension;
-use axum::routing::post;
+use axum::routing::{post, put};
 use axum::{routing::get, Router};
 use sqlx::{Pool, Postgres};
 use tower_http::cors::{CorsLayer, Any};
@@ -8,7 +8,7 @@ mod root;
 use root::root_get;
 
 mod merchant_route;
-use self::merchant_route::{merchant_post, merchant_list};
+use self::merchant_route::{merchant_post, merchant_list, merchant_update};
 
 pub fn create_routes(db: Pool<Postgres>) -> Router {
     let cors = CorsLayer::new()
@@ -19,6 +19,7 @@ pub fn create_routes(db: Pool<Postgres>) -> Router {
     .route("/", get(root_get))
     .route("/merchants", post(merchant_post))
     .route("/merchants", get(merchant_list))
+    .route("/merchants/:id", put(merchant_update))
     .layer(cors) // affect allroutes above
     .layer(Extension(db))
 }

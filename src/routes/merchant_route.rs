@@ -1,6 +1,5 @@
-use std::error::Error;
-
 use axum::body::Body;
+use axum::extract::Path;
 use axum::{Extension, http::StatusCode};
 use axum::response::{Response, IntoResponse};
 
@@ -34,6 +33,42 @@ pub async fn merchant_post(
       }
     }
 
+    pub async fn merchant_update(
+        Path(id): Path<i32>,
+        Extension(db): Extension<Pool<Postgres>>,
+        Json(post): Json<Merchant>
+    ) ->  Response<Body>  {
+    
+        let mut query = String::from("update merchants SET ");
+        if let Some(name) = post.name {
+            query = format!(r#"{} name = '{}' "#, query, name);
+        }
+        if let Some(status) = post.status {
+            query = format!("{}, status = {} ", query, status);
+        }
+        if let Some(md) = post.metadata {
+            query = format!("{}, metadata = {} ", query, md);
+        }
+        query = format!("{} where id = {} ", query, id);
+        query = format!("{}  {}", query, r#"returning id, name, created_at, updated_at, metadata, status as "status!: enums::Status""#);
+
+        dbg!(&query);
+        let result = sqlx::query_as::<_, Merchant>(
+            &query,
+        )
+        .fetch_one(&db)
+        .await;
+    
+        match result {
+            Ok(merchant) =>  return (StatusCode::OK, Json(merchant)).into_response(),    
+            Err(_err) => {
+                dbg!(&_err);
+                let error = _err.as_database_error().map(|m| m.message());
+                return (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
+            } 
+          }
+        }
+        
     pub async fn merchant_list(
         Extension(db): Extension<Pool<Postgres>>
     ) ->  Response<Body>  {
