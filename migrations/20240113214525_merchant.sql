@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS merchants (
    created_at TIMESTAMPTZ DEFAULT current_timestamp,
    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
    metadata jsonb,
-   status text not null
+   status merchant_status not null
 );
 
 select trigger_updated_at('merchants');
