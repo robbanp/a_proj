@@ -1,6 +1,6 @@
 use dotenvy_macro::dotenv;
 use dotenvy::dotenv;
-mod routes;
+pub mod routes;
 use sqlx::postgres::PgPoolOptions;
 mod models;
 
