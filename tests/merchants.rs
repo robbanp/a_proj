@@ -35,7 +35,7 @@ fn app() -> Router {
         .layer(TraceLayer::new_for_http())
 }
 
-async fn test_db() -> Pool<Postgres> {
+async fn init_db() -> Pool<Postgres> {
     dotenv().ok();
     let conn_str = dotenv!("DATABASE_URL");
     let test_database_name = format!("test_database");
@@ -44,6 +44,11 @@ async fn test_db() -> Pool<Postgres> {
     let db = PgPoolOptions::new()
         .max_connections(10)
         .connect(&conn_str).await.expect("msg");
+
+    sqlx::query(&format!("DROP DATABASE  IF EXISTS {}", test_database_name))
+    .execute(&db)
+    .await
+    .expect("Failed to create test database");
 
     sqlx::query(&format!("CREATE DATABASE {}", test_database_name))
     .execute(&db)
@@ -63,7 +68,7 @@ async fn test_db() -> Pool<Postgres> {
 async fn kill_db(db: Pool<Postgres>) {
     sqlx::query(&format!("DROP DATABASE test_database"))
         .execute(&db)
-        .await;
+        .await.expect("could not drop");
         return;
 }
 
@@ -72,24 +77,20 @@ mod tests {
     use super::*;
     use axum::{
         body::Body,
-        extract::connect_info::MockConnectInfo,
-        http::{self, Request, StatusCode},
+        http::{Request, StatusCode},
     };
-    use http_body_util::BodyExt; // for `collect`
-    use serde_json::{json, Value};
-    use std::net::SocketAddr;
-    use tokio::net::TcpListener;
-    use tower::{Service, ServiceExt}; // for `call`, `oneshot`, and `ready`
+    use http_body_util::BodyExt;    
+    use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
     #[tokio::test]
     async fn hello_world() {
-        let db = test_db().await;
+        let db = init_db().await;
         let app = psp_core::routes::create_routes(db.clone());
 
         // `Router` implements `tower::Service<Request<Body>>` so we can
         // call it like any tower service, no need to run an HTTP server.
         let response = app
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/merchants").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
