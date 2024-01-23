@@ -10,7 +10,7 @@ pub async fn run() {
 
     let db = PgPoolOptions::new()
         .max_connections(10)
-        .connect(&conn_str)
+        .connect(conn_str)
         .await.expect("cannot connect to db");
 
     let _ = sqlx::migrate!().run(&db).await;

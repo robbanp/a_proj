@@ -24,11 +24,11 @@ pub async fn merchant_post(
     .await;
 
     match result {
-        Ok(merchant) =>  return (StatusCode::OK, Json(merchant)).into_response(),    
+        Ok(merchant) =>  (StatusCode::OK, Json(merchant)).into_response(),    
         Err(_err) => {
             dbg!(&_err);
             let error = _err.as_database_error().map(|m| m.message());
-            return (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
+            (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
         } 
       }
     }
@@ -57,11 +57,11 @@ pub async fn merchant_post(
     
 
         match result {
-            Ok(merchant) =>  return (StatusCode::OK, Json(merchant)).into_response(),    
+            Ok(merchant) =>  (StatusCode::OK, Json(merchant)).into_response(),    
             Err(_err) => {
                 dbg!(&_err);
                 let error = _err.as_database_error().map(|m| m.message());
-                return (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
+                (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
             } 
           }
         }
@@ -77,11 +77,11 @@ pub async fn merchant_post(
         .await;
     
         match result {
-            Ok(merchants) =>  return (StatusCode::OK, Json(merchants)).into_response(),    
+            Ok(merchants) =>  (StatusCode::OK, Json(merchants)).into_response(),    
             Err(_err) => {
                 dbg!(&_err);
                 let error = _err.as_database_error().map(|m| m.message());
-                return (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
+                (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
             } 
           }
         }
@@ -100,11 +100,11 @@ pub async fn merchant_post(
         .await;
     
         match result {
-            Ok(merchants) =>  return (StatusCode::OK, Json(merchants)).into_response(),    
+            Ok(merchants) =>  (StatusCode::OK, Json(merchants)).into_response(),    
             Err(_err) => {
                 dbg!(&_err);
                 let error = _err.as_database_error().map(|m| m.message());
-                return (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
+                (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
             } 
             }
         }

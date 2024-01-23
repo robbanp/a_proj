@@ -9,5 +9,5 @@ pub async fn root_get(Extension(db): Extension<Pool<Postgres>>) -> Response {
     .fetch_one(&db)
     .await;
     
-    return (StatusCode::OK, Json(format!("found {:?} merchants", merchant_count.unwrap()))).into_response();
+    (StatusCode::OK, Json(format!("found {:?} merchants", merchant_count.unwrap()))).into_response()
 }

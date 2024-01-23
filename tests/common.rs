@@ -48,7 +48,7 @@ pub async fn kill_db(db: Pool<Postgres>) {
         .await.expect("could not drop");
 }
 
-pub async fn get_req(method: &str, uri: &str, body: String) -> Request<String> {
+pub fn get_req(method: &str, uri: &str, body: String) -> Request<String> {
     Request::builder().header("content-type", "application/json").method(method).uri(uri).body(body).unwrap()
 }
 

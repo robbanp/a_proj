@@ -13,7 +13,7 @@ mod tests {
     async fn get_merchants_empty() {
         let db = init_db().await;
         let app = psp_core::routes::create_routes(db.clone());
-        let req = common::get_req("GET", "/merchants", String::new()).await;
+        let req = common::get_req("GET", "/merchants", String::new());
         let response = common::get_response(app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
 
@@ -28,13 +28,12 @@ mod tests {
         let db = init_db().await;
         let app = psp_core::routes::create_routes(db.clone());
         let body = common::merchant_fac();
-        let j = serde_json::to_value(&body).unwrap().to_string();
-        let req = common::get_req("POST", "/merchants", j).await;
+        let json = serde_json::to_value(&body).unwrap().to_string();
+        let req = common::get_req("POST", "/merchants", json);
         let response = common::get_response(app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
 
-        let m = common::from_response::<Merchant>(response).await;
-        dbg!(&m);
+        let m: Merchant = common::from_response::<Merchant>(response).await;
         assert_eq!(m.name, body.name);
         kill_db(db).await;
     }
