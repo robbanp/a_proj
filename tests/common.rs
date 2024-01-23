@@ -1,4 +1,3 @@
-use axum::Router;
 use axum::http::Request;
 use axum::body::Body;
 use axum::http::Response;
@@ -9,6 +8,8 @@ use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 use fake::Fake;
 use fake::locales::*;
 use fake::faker::company::raw::*;
+use tower::ServiceExt;
+use http_body_util::BodyExt;
 
 
 pub async fn init_db() -> Pool<Postgres> {
@@ -62,11 +63,15 @@ pub fn merchant_fac() -> Merchant {
     }
 }
 
-pub async fn from_response<T: for<'a> serde::de::Deserialize<'a>>(app: axum::Router, req: Request<String>) -> T {
+pub async fn get_response(app: axum::Router, req: Request<String>) -> Response<Body> {
     let response: Response<Body> = app
     .oneshot(req)
     .await
     .unwrap();
+    response
+}
+
+pub async fn from_response<T: for<'a> serde::de::Deserialize<'a>>(response: Response<Body>) -> T {
     let res_bytes = response.into_body().collect().await.unwrap().to_bytes();
     let body_str = String::from_utf8(res_bytes.to_vec()).unwrap();
     let created_model: T = serde_json::from_str(&body_str).unwrap();
