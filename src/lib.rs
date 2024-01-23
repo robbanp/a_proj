@@ -2,7 +2,7 @@ use dotenvy_macro::dotenv;
 use dotenvy::dotenv;
 pub mod routes;
 use sqlx::postgres::PgPoolOptions;
-mod models;
+pub mod models;
 
 pub async fn run() {
     dotenv().ok();

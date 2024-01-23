@@ -5,6 +5,7 @@ use validator::Validate;
 use super::enums;
 
 #[derive(Serialize, Deserialize, Debug, Validate, FromRow, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Merchant {
     pub id: Option<i32>,
     pub name: Option<String>,

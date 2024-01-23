@@ -1,104 +1,61 @@
-//! Run with
-//!
-//! ```not_rust
-//! cargo test -p example-testing
-//! ```
-
-use std::net::SocketAddr;
-
-use axum::{
-    extract::ConnectInfo,
-    routing::{get, post},
-    Json, Router,
-};
-use dotenvy_macro::dotenv;
-use dotenvy::dotenv;
-use sqlx::{Pool, Postgres};
-use tower_http::trace::TraceLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use sqlx::postgres::PgPoolOptions;
-
-fn app() -> Router {
-    Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
-        .route(
-            "/json",
-            post(|payload: Json<serde_json::Value>| async move {
-                Json(serde_json::json!({ "data": payload.0 }))
-            }),
-        )
-        .route(
-            "/requires-connect-into",
-            get(|ConnectInfo(addr): ConnectInfo<SocketAddr>| async move { format!("Hi {addr}") }),
-        )
-        // We can still add middleware
-        .layer(TraceLayer::new_for_http())
-}
-
-async fn init_db() -> Pool<Postgres> {
-    dotenv().ok();
-    let conn_str = dotenv!("DATABASE_URL");
-    let test_database_name = format!("test_database");
-
-
-    let db = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&conn_str).await.expect("msg");
-
-    sqlx::query(&format!("DROP DATABASE  IF EXISTS {}", test_database_name))
-    .execute(&db)
-    .await
-    .expect("Failed to create test database");
-
-    sqlx::query(&format!("CREATE DATABASE {}", test_database_name))
-    .execute(&db)
-    .await
-    .expect("Failed to create test database");
-
- 
-    let db = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&conn_str).await.expect("msg");
-
-    sqlx::migrate!("./migrations/").run(&db).await.unwrap();
-
-    db
-}
-
-async fn kill_db(db: Pool<Postgres>) {
-    sqlx::query(&format!("DROP DATABASE test_database"))
-        .execute(&db)
-        .await.expect("could not drop");
-        return;
-}
-
+mod common;
+use common::{kill_db, init_db};
+use psp_core::models::merchant::Merchant;
+use psp_core::models::enums::Status;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{
-        body::Body,
-        http::{Request, StatusCode},
-    };
+    use axum::body::Body;
+    use axum::http::Response;
+    use axum::
+        http::StatusCode
+    ;
     use http_body_util::BodyExt;    
-    use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
+    use tower::ServiceExt;
+    use fake::Fake;
+    use fake::locales::*;
+    use fake::faker::company::raw::*;
+
 
     #[tokio::test]
-    async fn hello_world() {
+    async fn get_merchants() {
         let db = init_db().await;
         let app = psp_core::routes::create_routes(db.clone());
-
-        // `Router` implements `tower::Service<Request<Body>>` so we can
-        // call it like any tower service, no need to run an HTTP server.
+        let req = common::get_req("GET", "/merchants", String::new()).await;
         let response = app
-            .oneshot(Request::builder().uri("/merchants").body(Body::empty()).unwrap())
+            .oneshot(req)
             .await
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert_eq!(&body[..], b"Hello, World!");
-        kill_db(db);
+        let res_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body_str = String::from_utf8(res_bytes.to_vec()).unwrap();
+        let list: Vec<Merchant> = serde_json::from_str(&body_str).unwrap();
+        assert_eq!(list.len(), 0);
+        dbg!(list);
+        kill_db(db).await;
     }
 
+    #[tokio::test]
+    async fn create_merchants() {
+        let db = init_db().await;
+        let app = psp_core::routes::create_routes(db.clone());
+        let body = common::merchant_fac();
+        let j = serde_json::to_value(&body).unwrap().to_string();
+        let req = common::get_req("POST", "/merchants", j).await;
+        let response: Response<Body> = app
+            .oneshot(req)
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let res_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body_str = String::from_utf8(res_bytes.to_vec()).unwrap();
+        let created_merchant: Merchant = serde_json::from_str(&body_str).unwrap();
+        dbg!(&created_merchant);
+        assert_eq!(created_merchant.name, body.name);
+        kill_db(db).await;
     }
+
+}
