@@ -17,4 +17,16 @@ pub mod enums {
         #[strum(serialize = "sandbox")]
         Sandbox,
     }
+
+    #[derive(Debug)]
+    pub enum HandlerError {
+        DbError(String),
+        ValidationError(String)
+    }
+
+    impl From<sqlx::Error> for HandlerError {
+        fn from(err: sqlx::Error) -> Self {
+          HandlerError::DbError(err.to_string()) 
+        }
+    }
 }

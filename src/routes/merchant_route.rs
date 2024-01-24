@@ -7,7 +7,7 @@ use axum::Json;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
 
-use crate::models::enums::{Status, self};
+use crate::models::enums::{Status, self, HandlerError};
 use crate::models::merchant::Merchant;
 
 pub async fn merchant_post(
@@ -79,12 +79,18 @@ pub async fn merchant_post(
         match result {
             Ok(merchants) =>  (StatusCode::OK, Json(merchants)).into_response(),    
             Err(_err) => {
-                dbg!(&_err);
-                let error = _err.as_database_error().map(|m| m.message());
-                (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(error))).into_response()
-            } 
-          }
+                let error  = HandlerError::from(_err);
+                match error {
+                    HandlerError::DbError(msg) => {
+                        (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(msg))).into_response()
+                    },
+                    HandlerError::ValidationError(msg) => {
+                        (StatusCode::UNPROCESSABLE_ENTITY, Json(json!(msg))).into_response()
+                    }
+                } 
+            }
         }
+    }
     
     pub async fn merchant_get(
         Path(id): Path<i32>,

@@ -9,6 +9,7 @@ mod tests {
     ;
 
 
+    // get an empty list of merchants
     #[tokio::test]
     async fn get_merchants_empty() {
         let db = init_db().await;
@@ -23,6 +24,7 @@ mod tests {
         kill_db(db).await;
     }
 
+    // create a merchant with a name and get it back
     #[tokio::test]
     async fn create_merchants() {
         let db = init_db().await;
