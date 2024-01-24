@@ -6,6 +6,7 @@ use tower_http::cors::{CorsLayer, Any};
 use axum::http::Method;
 mod root;
 use root::root_get;
+mod common;
 
 mod merchant_route;
 use self::merchant_route::{merchant_post, merchant_list, merchant_update, merchant_get};

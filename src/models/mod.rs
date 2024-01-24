@@ -18,7 +18,7 @@ pub mod enums {
         Sandbox,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Display)]
     pub enum HandlerError {
         DbError(String),
         ValidationError(String)
